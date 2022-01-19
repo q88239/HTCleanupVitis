@@ -1,3 +1,0 @@
-/Users/osamu/Documents/Clone/HTCleanupVitis/build/CMakeFiles/test_bench.dir
-/Users/osamu/Documents/Clone/HTCleanupVitis/build/CMakeFiles/edit_cache.dir
-/Users/osamu/Documents/Clone/HTCleanupVitis/build/CMakeFiles/rebuild_cache.dir
