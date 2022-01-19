@@ -2,10 +2,7 @@
 	"artifacts" : 
 	[
 		{
-			"path" : "test_bench.exe"
-		},
-		{
-			"path" : "test_bench.pdb"
+			"path" : "test_bench"
 		}
 	],
 	"backtrace" : 1,
@@ -38,7 +35,7 @@
 			"compileCommandFragments" : 
 			[
 				{
-					"fragment" : "-Wall -Wformat -Wextra -Wconversion -Wsign-conversion -Wunused-parameter -Wall -Wformat -Wextra -Wconversion -Wsign-conversion -Wunused-parameter -O0 -g"
+					"fragment" : "-Wformat -fno-omit-frame-pointer -Wformat -fno-omit-frame-pointer -O0 -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.1.sdk"
 				},
 				{
 					"fragment" : "-std=gnu++17"
@@ -66,22 +63,18 @@
 		"commandFragments" : 
 		[
 			{
-				"fragment" : "-Wall -Wformat -Wextra -Wconversion -Wsign-conversion -Wunused-parameter -Wall -Wformat -Wextra -Wconversion -Wsign-conversion -Wunused-parameter -O0 -g",
+				"fragment" : "-Wformat -fno-omit-frame-pointer -Wformat -fno-omit-frame-pointer -O0 -g",
 				"role" : "flags"
 			},
 			{
 				"fragment" : "",
 				"role" : "flags"
-			},
-			{
-				"fragment" : "-lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32",
-				"role" : "libraries"
 			}
 		],
 		"language" : "CXX"
 	},
 	"name" : "test_bench",
-	"nameOnDisk" : "test_bench.exe",
+	"nameOnDisk" : "test_bench",
 	"paths" : 
 	{
 		"build" : ".",

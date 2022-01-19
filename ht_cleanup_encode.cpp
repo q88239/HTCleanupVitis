@@ -1,6 +1,6 @@
-#include <algorithm>
-#include <memory>
-#include <string.h>
+//#include <algorithm>
+//#include <memory>
+//#include <string.h>
 #include "MS_VLC_MEL.h"
 #include "bitoperation.h"
 #include "ht_tables.h"
@@ -14,6 +14,12 @@
 
 #define SHIFT_SIGMA 0  // J2K and HTJ2K
 
+int32_t my_max_4(int32_t x0, int32_t x1, int32_t x2, int32_t x3) {
+  int32_t y0, y1;
+  y0 = (x0 > x1) ? x0 : x1;
+  y1 = (x2 > x3) ? x2 : x3;
+  return (y0 > y1) ? y0 : y1;
+}
 void j2k_codeblock::set_MagSgn_and_sigma(uint32_t &or_val) {
   const uint32_t height = this->size.y;
   const uint32_t width  = this->size.x;
@@ -21,7 +27,7 @@ void j2k_codeblock::set_MagSgn_and_sigma(uint32_t &or_val) {
 
   for (uint16_t i = 0; i < height; ++i) {
     sprec_t *const sp  = this->i_samples + i * stride;
-    int32_t *const dp  = this->sample_buf.get() + i * width; // kuramochi
+    int32_t *const dp  = this->sample_buf + i * width;  // kuramochi
     size_t block_index = (i + 1) * (size.x + 2) + 1;
     for (uint16_t j = 0; j < width; ++j) {
       int32_t temp  = sp[j];
@@ -175,7 +181,7 @@ void state_MEL_enc::encodeMEL(uint8_t smel) {
       if (MEL_run >= MEL_t) {
         emitMELbit(1);
         MEL_run = 0;
-        MEL_k   = std::min(12, MEL_k + 1);
+        MEL_k   = (12 < (MEL_k + 1)) ? 12 : (MEL_k + 1);  // std::min(12, MEL_k + 1);
         eval    = MEL_E[MEL_k];
         MEL_t   = 1 << eval;
       }
@@ -190,7 +196,7 @@ void state_MEL_enc::encodeMEL(uint8_t smel) {
         emitMELbit((MEL_run >> eval) & 1);
       }
       MEL_run = 0;
-      MEL_k   = std::max(0, MEL_k - 1);
+      MEL_k   = (0 > (MEL_k - 1)) ? 0 : (MEL_k - 1);  // std::max(0, MEL_k - 1);
       eval    = MEL_E[MEL_k];
       MEL_t   = 1 << eval;
       break;
@@ -207,13 +213,15 @@ void state_MEL_enc::termMEL() {
  * state_VLC_enc: member functions
  *******************************************************************************/
 void state_VLC_enc::emitVLCBits(uint16_t cwd, uint8_t len) {
-  for (; len > 0;) {
+  int32_t len32 = len;
+  for (; len32 > 0;) {
     int32_t available_bits = 8 - (last > 0x8F) - bits;
-    int32_t t              = std::min(available_bits, (int32_t)len);
+    int32_t t =
+        (available_bits < len32) ? available_bits : len32;  // std::min(available_bits, (int32_t)len);
     tmp |= (cwd & (1 << t) - 1) << bits;
     bits += t;
     available_bits -= t;
-    len -= t;
+    len32 -= t;
     cwd >>= t;
     if (available_bits == 0) {
       if ((last > 0x8f) && tmp != 0x7F) {
@@ -261,18 +269,18 @@ static inline void make_storage(const j2k_codeblock *const block, const uint16_t
 
   // First quad
   for (int i = 0; i < 4; ++i) {
-    sigma_n[i] = block->get_state(Sigma, y[i], x[i]); // kuramochi
+    sigma_n[i] = block->get_state(Sigma, y[i], x[i]);  // kuramochi
   }
   rho_q[0] = sigma_n[0] + (sigma_n[1] << 1) + (sigma_n[2] << 2) + (sigma_n[3] << 3);
   // Second quad
   for (int i = 4; i < 8; ++i) {
-    sigma_n[i] = block->get_state(Sigma, y[i], x[i]); // kuramochi
+    sigma_n[i] = block->get_state(Sigma, y[i], x[i]);  // kuramochi
   }
   rho_q[1] = sigma_n[4] + (sigma_n[5] << 1) + (sigma_n[6] << 2) + (sigma_n[7] << 3);
 
   for (int i = 0; i < 8; ++i) {
     if ((x[i] >= 0 && x[i] < (block->size.x)) && (y[i] >= 0 && y[i] < (block->size.y))) {
-      v_n[i] = block->sample_buf[x[i] + y[i] * block->size.x]; // kuramochi
+      v_n[i] = block->sample_buf[x[i] + y[i] * block->size.x];  // kuramochi
     } else {
       v_n[i] = 0;
     }
@@ -290,13 +298,13 @@ static inline void make_storage_one(const j2k_codeblock *const block, const uint
   const int32_t y[4] = {2 * qy, 2 * qy + 1, 2 * qy, 2 * qy + 1};
 
   for (int i = 0; i < 4; ++i) {
-    sigma_n[i] = block->get_state(Sigma, y[i], x[i]); // kuramochi
+    sigma_n[i] = block->get_state(Sigma, y[i], x[i]);  // kuramochi
   }
   rho_q[0] = sigma_n[0] + (sigma_n[1] << 1) + (sigma_n[2] << 2) + (sigma_n[3] << 3);
 
   for (int i = 0; i < 4; ++i) {
     if ((x[i] >= 0 && x[i] < (block->size.x)) && (y[i] >= 0 && y[i] < (block->size.y))) {
-      v_n[i] = block->sample_buf[x[i] + y[i] * block->size.x]; // kuramochi
+      v_n[i] = block->sample_buf[x[i] + y[i] * block->size.x];  // kuramochi
     } else {
       v_n[i] = 0;
     }
@@ -367,7 +375,7 @@ int32_t termMELandVLC(state_VLC_enc &VLC, state_MEL_enc &MEL) {
     }                                                                                                      \
     for (int i = 0; i < 8; ++i)                                                                            \
       E_n[i] = (32 - count_leading_zeros(((v_n[i] >> 1) << 1) + 1)) * sigma_n[i];                          \
-  } // kuramochi
+  }  // kuramochi
 
 #define Q0 0
 #define Q1 1
@@ -391,43 +399,47 @@ int32_t htj2k_encode(j2k_codeblock *const block, const uint8_t ROIshift) noexcep
   if (!or_val) {
     // nothing to do here because this codeblock is empty
     // set length of coding passes
-    block->length         = 0;
-    block->pass_length[0] = 0;
+    block->length      = 0;
+    block->pass_length = 0;
     // set number of coding passes
-    block->num_passes      = 0;
-    block->layer_passes[0] = 0; // kuramochi
-    block->layer_start[0]  = 0; // kuramochi
+    block->num_passes = 0;
+    // block->layer_passes = 0; // kuramochi
+    // block->layer_start  = 0; // kuramochi
     // set number of zero-bitplanes (=Zblk)
     block->num_ZBP = block->get_Mb() - 1;
     return block->length;
   }
 
   // buffers shall be zeroed.
-  std::unique_ptr<uint8_t[]> rev_buf = std::make_unique<uint8_t[]>(MAX_Scup); // kuramochi
-  memset(fwd_buf.get(), 0, sizeof(uint8_t) * (MAX_Lcup));
-  memset(rev_buf.get(), 0, sizeof(uint8_t) * MAX_Scup);
+  uint8_t fwd_buf[MAX_Lcup] = {0};
+  uint8_t rev_buf[MAX_Scup] = {0};  // kuramochi
+  // memset(fwd_buf.get(), 0, sizeof(uint8_t) * (MAX_Lcup));
+  // memset(rev_buf.get(), 0, sizeof(uint8_t) * MAX_Scup);
 
-  state_MS_enc MagSgn_encoder(fwd_buf.get());
-  state_MEL_enc MEL_encoder(rev_buf.get());
-  state_VLC_enc VLC_encoder(rev_buf.get());
+  state_MS_enc MagSgn_encoder(fwd_buf);
+  state_MEL_enc MEL_encoder(rev_buf);
+  state_VLC_enc VLC_encoder(rev_buf);
 
-  alignas(32) uint32_t v_n[8];
-  std::unique_ptr<int32_t[]> Eadj = std::make_unique<int32_t[]>(round_up(block->size.x, 2) + 2);
-  memset(Eadj.get(), 0, round_up(block->size.x, 2) + 2); // kuramochi
-  std::unique_ptr<uint8_t[]> sigma_adj = std::make_unique<uint8_t[]>(round_up(block->size.x, 2) + 2);
-  memset(sigma_adj.get(), 0, round_up(block->size.x, 2) + 2); // kuramochi
-  alignas(32) uint8_t sigma_n[8] = {0}, rho_q[2] = {0}, gamma[2] = {0}, emb_k, emb_1, lw, m_n[8] = {0};
-  alignas(32) uint16_t c_q[2] = {0, 0}, n_q[2] = {0}, CxtVLC[2] = {0}, cwd;
-  alignas(32) int32_t E_n[8] = {0}, Emax_q[2] = {0}, U_q[2] = {0}, u_q[2] = {0}, uoff_q[2] = {0},
-                      emb[2] = {0}, kappa = 1;
+  uint32_t v_n[8];
+  // std::unique_ptr<int32_t[]> Eadj = std::make_unique<int32_t[]>(round_up(block->size.x, 2) + 2);
+  // memset(Eadj.get(), 0, round_up(block->size.x, 2) + 2);  // kuramochi
+  // std::unique_ptr<uint8_t[]> sigma_adj = std::make_unique<uint8_t[]>(round_up(block->size.x, 2) + 2);
+  // memset(sigma_adj.get(), 0, round_up(block->size.x, 2) + 2);  // kuramochi
+
+  int32_t Eadj[CBLK_WIDTH + 2]      = {0};
+  uint8_t sigma_adj[CBLK_WIDTH + 2] = {0};
+  uint8_t sigma_n[8] = {0}, rho_q[2] = {0}, gamma[2] = {0}, emb_k, emb_1, lw, m_n[8] = {0};
+  uint16_t c_q[2] = {0, 0}, n_q[2] = {0}, CxtVLC[2] = {0}, cwd;
+  int32_t E_n[8] = {0}, Emax_q[2] = {0}, U_q[2] = {0}, u_q[2] = {0}, uoff_q[2] = {0}, emb[2] = {0},
+          kappa = 1;
 
   // Initial line pair
-  int32_t *ep = Eadj.get();
+  int32_t *ep = Eadj;
   ep++;
-  uint8_t *sp = sigma_adj.get();
+  uint8_t *sp = sigma_adj;
   sp++;
-  int32_t *p_sample = block->sample_buf.get();
-  for (uint16_t qx = 0; qx < QW - 1; qx += 2) { // kuramochi
+  int32_t *p_sample = block->sample_buf;         //.get();
+  for (uint16_t qx = 0; qx < QW - 1; qx += 2) {  // kuramochi
     const int16_t qy = 0;
     MAKE_STORAGE()
 
@@ -436,8 +448,8 @@ int32_t htj2k_encode(j2k_codeblock *const block, const uint8_t ROIshift) noexcep
       MEL_encoder.encodeMEL((rho_q[Q0] != 0));
     }
 
-    Emax_q[Q0] = std::max({E_n[0], E_n[1], E_n[2], E_n[3]});
-    U_q[Q0]    = std::max((int32_t)Emax_q[Q0], kappa);
+    Emax_q[Q0] = my_max_4(E_n[0], E_n[1], E_n[2], E_n[3]);
+    U_q[Q0]    = (Emax_q[Q0] > kappa) ? Emax_q[Q0] : kappa;  // std::max((int32_t)Emax_q[Q0], kappa);
     u_q[Q0]    = U_q[Q0] - kappa;
     uoff_q[Q0] = (u_q[Q0]) ? 1 : 0;
 #ifdef HTSIMD
@@ -486,23 +498,24 @@ int32_t htj2k_encode(j2k_codeblock *const block, const uint8_t ROIshift) noexcep
     // context for 2nd quad of current quad pair
     c_q[Q1] = (sigma_n[0] | sigma_n[1]) + (sigma_n[2] << 1) + (sigma_n[3] << 2);
 
-    Emax_q[Q1] = std::max({E_n[4], E_n[5], E_n[6], E_n[7]});
-    U_q[Q1]    = std::max((int32_t)Emax_q[Q1], kappa);
-    u_q[Q1]    = U_q[Q1] - kappa;
-    uoff_q[Q1] = (u_q[Q1]) ? 1 : 0;
+    Emax_q[Q1]     = my_max_4(E_n[4], E_n[5], E_n[6], E_n[7]);
+    U_q[Q1]        = (Emax_q[Q1] > kappa) ? Emax_q[Q1] : kappa;  // std::max((int32_t)Emax_q[Q1], kappa);
+    u_q[Q1]        = U_q[Q1] - kappa;
+    uoff_q[Q1]     = (u_q[Q1]) ? 1 : 0;
+    int32_t uq_min = (u_q[Q0] < u_q[Q1]) ? u_q[Q0] : u_q[Q1];
     // MEL encoding of the second quad
     if (c_q[Q1] == 0) {
       if (rho_q[Q1] != 0) {
         MEL_encoder.encodeMEL(1);
       } else {
-        if (std::min(u_q[Q0], u_q[Q1]) > 2) {
+        if (uq_min > 2) {
           MEL_encoder.encodeMEL(1);
         } else {
           MEL_encoder.encodeMEL(0);
         }
       }
     } else if (uoff_q[Q0] == 1 && uoff_q[Q1] == 1) {
-      if (std::min(u_q[Q0], u_q[Q1]) > 2) {
+      if (uq_min > 2) {
         MEL_encoder.encodeMEL(1);
       } else {
         MEL_encoder.encodeMEL(0);
@@ -555,8 +568,8 @@ int32_t htj2k_encode(j2k_codeblock *const block, const uint8_t ROIshift) noexcep
     if (c_q[Q0] == 0) {
       MEL_encoder.encodeMEL((rho_q[Q0] != 0));
     }
-    Emax_q[Q0] = std::max({E_n[0], E_n[1], E_n[2], E_n[3]});
-    U_q[Q0]    = std::max((int32_t)Emax_q[Q0], kappa);
+    Emax_q[Q0] = my_max_4(E_n[0], E_n[1], E_n[2], E_n[3]);
+    U_q[Q0]    = (Emax_q[Q0] > kappa) ? Emax_q[Q0] : kappa;  // std::max((int32_t)Emax_q[Q0], kappa);
     u_q[Q0]    = U_q[Q0] - kappa;
     uoff_q[Q0] = (u_q[Q0]) ? 1 : 0;
 #ifdef HTSIMD
@@ -603,9 +616,9 @@ int32_t htj2k_encode(j2k_codeblock *const block, const uint8_t ROIshift) noexcep
 
   // Non-initial line pair
   for (uint16_t qy = 1; qy < QH; qy++) {
-    ep = Eadj.get();
+    ep = Eadj;
     ep++;
-    sp = sigma_adj.get();
+    sp = sigma_adj;
     sp++;
     E_n[7]     = 0;
     sigma_n[6] = sigma_n[7] = 0;
@@ -631,8 +644,10 @@ int32_t htj2k_encode(j2k_codeblock *const block, const uint8_t ROIshift) noexcep
       }
 
       gamma[Q0] = (popcount32((uint32_t)rho_q[Q0]) > 1) ? 1 : 0;
-      kappa     = std::max(
-          (std::max({ep[2 * qx - 1], ep[2 * qx], ep[2 * qx + 1], ep[2 * qx + 2]}) - 1) * gamma[Q0], 1);
+
+      kappa = ((my_max_4(ep[2 * qx - 1], ep[2 * qx], ep[2 * qx + 1], ep[2 * qx + 2]) - 1) * gamma[Q0] > 1)
+                  ? (my_max_4(ep[2 * qx - 1], ep[2 * qx], ep[2 * qx + 1], ep[2 * qx + 2]) - 1) * gamma[Q0]
+                  : 1;
 
       ep[2 * qx] = E_n[1];
       // if (qx > 0) {
@@ -644,8 +659,8 @@ int32_t htj2k_encode(j2k_codeblock *const block, const uint8_t ROIshift) noexcep
       sp[2 * qx - 1] = sigma7;  // put back saved E_n
       //}
 
-      Emax_q[Q0] = std::max({E_n[0], E_n[1], E_n[2], E_n[3]});
-      U_q[Q0]    = std::max((int32_t)Emax_q[Q0], kappa);
+      Emax_q[Q0] = my_max_4(E_n[0], E_n[1], E_n[2], E_n[3]);
+      U_q[Q0]    = (Emax_q[Q0] > kappa) ? Emax_q[Q0] : kappa;  // std::max((int32_t)Emax_q[Q0], kappa);
       u_q[Q0]    = U_q[Q0] - kappa;
       uoff_q[Q0] = (u_q[Q0]) ? 1 : 0;
 #ifdef HTSIMD
@@ -687,11 +702,15 @@ int32_t htj2k_encode(j2k_codeblock *const block, const uint8_t ROIshift) noexcep
         MEL_encoder.encodeMEL((rho_q[Q1] != 0));
       }
       gamma[Q1] = (popcount32((uint32_t)rho_q[Q1]) > 1) ? 1 : 0;
-      kappa     = std::max(
-          (std::max({ep[2 * (qx + 1) - 1], ep[2 * (qx + 1)], ep[2 * (qx + 1) + 1], ep[2 * (qx + 1) + 2]})
-           - 1)
-              * gamma[Q1],
-          1);
+      kappa = ((my_max_4(ep[2 * (qx + 1) - 1], ep[2 * (qx + 1)], ep[2 * (qx + 1) + 1], ep[2 * (qx + 1) + 2])
+                - 1)
+                   * gamma[Q1]
+               > 1)
+                  ? (my_max_4(ep[2 * (qx + 1) - 1], ep[2 * (qx + 1)], ep[2 * (qx + 1) + 1],
+                              ep[2 * (qx + 1) + 2])
+                     - 1)
+                        * gamma[Q1]
+                  : 1;
 
       ep[2 * (qx + 1) - 1] = E_n[3];
       ep[2 * (qx + 1)]     = E_n[5];
@@ -704,8 +723,8 @@ int32_t htj2k_encode(j2k_codeblock *const block, const uint8_t ROIshift) noexcep
         sp[2 * (qx + 1) + 1] = sigma_n[7];
       }
 
-      Emax_q[Q1] = std::max({E_n[4], E_n[5], E_n[6], E_n[7]});
-      U_q[Q1]    = std::max((int32_t)Emax_q[Q1], kappa);
+      Emax_q[Q1] = my_max_4(E_n[4], E_n[5], E_n[6], E_n[7]);
+      U_q[Q1]    = (Emax_q[Q1] > kappa) ? Emax_q[Q1] : kappa;  // std::max((int32_t)Emax_q[Q1], kappa);
       u_q[Q1]    = U_q[Q1] - kappa;
       uoff_q[Q1] = (u_q[Q1]) ? 1 : 0;
 #ifdef HTSIMD
@@ -760,8 +779,10 @@ int32_t htj2k_encode(j2k_codeblock *const block, const uint8_t ROIshift) noexcep
       }
 
       gamma[Q0] = (popcount32((uint32_t)rho_q[Q0]) > 1) ? 1 : 0;
-      kappa     = std::max(
-          (std::max({ep[2 * qx - 1], ep[2 * qx], ep[2 * qx + 1], ep[2 * qx + 2]}) - 1) * gamma[Q0], 1);
+
+      kappa = ((my_max_4(ep[2 * qx - 1], ep[2 * qx], ep[2 * qx + 1], ep[2 * qx + 2]) - 1) * gamma[Q0] > 1)
+                  ? (my_max_4(ep[2 * qx - 1], ep[2 * qx], ep[2 * qx + 1], ep[2 * qx + 2]) - 1) * gamma[Q0]
+                  : 1;
 
       ep[2 * qx] = E_n[1];
       // if (qx > 0) {
@@ -777,8 +798,8 @@ int32_t htj2k_encode(j2k_codeblock *const block, const uint8_t ROIshift) noexcep
       // this quad (first) is the end of the line-pair
       sp[2 * qx + 1] = sigma_n[3];
 
-      Emax_q[Q0] = std::max({E_n[0], E_n[1], E_n[2], E_n[3]});
-      U_q[Q0]    = std::max((int32_t)Emax_q[Q0], kappa);
+      Emax_q[Q0] = my_max_4(E_n[0], E_n[1], E_n[2], E_n[3]);
+      U_q[Q0]    = (Emax_q[Q0] > kappa) ? Emax_q[Q0] : kappa;  // std::max((int32_t)Emax_q[Q0], kappa);
       u_q[Q0]    = U_q[Q0] - kappa;
       uoff_q[Q0] = (u_q[Q0]) ? 1 : 0;
 #ifdef HTSIMD
@@ -822,7 +843,7 @@ int32_t htj2k_encode(j2k_codeblock *const block, const uint8_t ROIshift) noexcep
   Pcup = MagSgn_encoder.termMS();
   MEL_encoder.termMEL();
   Scup = termMELandVLC(VLC_encoder, MEL_encoder);
-  memcpy(&fwd_buf[Pcup], &rev_buf[0], Scup);
+  // memcpy(&fwd_buf[Pcup], &rev_buf[0], Scup);
   Lcup = Pcup + Scup;
 
   fwd_buf[Lcup - 1] = Scup >> 4;
@@ -831,14 +852,14 @@ int32_t htj2k_encode(j2k_codeblock *const block, const uint8_t ROIshift) noexcep
   // printf("Lcup %d\n", Lcup);
 
   // transfer Dcup[] to block->compressed_data
-  block->set_compressed_data(fwd_buf.get(), Lcup);
+  // block->set_compressed_data(fwd_buf.get(), Lcup);
   // set length of compressed data
-  block->length         = Lcup;
-  block->pass_length[0] = Lcup;
+  block->length      = Lcup;
+  block->pass_length = Lcup;
   // set number of coding passes
-  block->num_passes      = 1;
-  block->layer_passes[0] = 1;
-  block->layer_start[0]  = 0; // kuramochi
+  block->num_passes = 1;
+  // block->layer_passes[0] = 1;
+  // block->layer_start[0]  = 0; // kuramochi
   // set number of zero-bit planes (=Zblk) // kuramochi
   block->num_ZBP = block->get_Mb() - 1;
   return block->length;

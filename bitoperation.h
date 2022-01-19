@@ -1,8 +1,8 @@
 #pragma once
 #include <stdint.h>
 
-static inline size_t popcount32(uintmax_t num) {
-  size_t precision = 0;
+static inline uint32_t popcount32(uintmax_t num) {
+  uint32_t precision = 0;
   while (num != 0) {
     if (1 == (num & 1)) {
       precision++;

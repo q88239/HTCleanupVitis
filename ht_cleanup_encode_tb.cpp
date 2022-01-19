@@ -208,8 +208,12 @@ sprec_t data[4096] = {
     -41, -33, -15, -5,  -11, -4,  -16, -40, -45, -48, -39, -3,  -31,  -74, -74, -44,
 };
 
+uint8_t g_compressed_buffer[65536]                           = {0};
+int32_t g_sample_buffer[CBLK_WIDTH * CBLK_HEIGHT]            = {0};
+uint8_t g_state_buffer[(CBLK_WIDTH + 2) * (CBLK_HEIGHT + 2)] = {0};
+
 int main() {
-	int retval = 0;
+  int retval              = 0;
   uint8_t ROIshift        = 0;
   j2k_codeblock *blk      = nullptr;
   uint32_t idx            = 0;
@@ -227,14 +231,15 @@ int main() {
   element_siz s(64, 64);
 
   blk = new j2k_codeblock(idx, orientation, M_b, R_b, transformation, stepsize, band_stride, &data[0],
-                          offset, numlayers, codeblock_style, p0, p1, s);
+                          offset, numlayers, codeblock_style, p0, p1, s, g_sample_buffer, g_state_buffer,
+                          g_compressed_buffer);
   int32_t length = htj2k_encode(blk, ROIshift);
   delete blk;
   if (length == 3921) {
-	  printf("OK!\n");
+    printf("OK!\n");
   } else {
-	  retval = 1;
-	  printf("NG!\n");
+    retval = 1;
+    printf("NG!\n");
   }
   return retval;
 }

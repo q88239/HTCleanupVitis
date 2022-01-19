@@ -1,12 +1,12 @@
 [
 {
-  "directory": "C:/Users/admin441/Documents/HTCleanupVitis/build",
-  "command": "C:/tools/msys64/mingw64/bin/x86_64-w64-mingw32-g++.exe   -Wall -Wformat -Wextra -Wconversion -Wsign-conversion -Wunused-parameter -Wall -Wformat -Wextra -Wconversion -Wsign-conversion -Wunused-parameter -O0 -g -std=gnu++17 -o CMakeFiles/test_bench.dir/ht_cleanup_encode.cpp.obj -c C:/Users/admin441/Documents/HTCleanupVitis/ht_cleanup_encode.cpp",
-  "file": "C:/Users/admin441/Documents/HTCleanupVitis/ht_cleanup_encode.cpp"
+  "directory": "/Users/osamu/Documents/Clone/HTCleanupVitis/build",
+  "command": "/usr/bin/clang++   -Wformat -fno-omit-frame-pointer -Wformat -fno-omit-frame-pointer -O0 -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.1.sdk -std=gnu++17 -o CMakeFiles/test_bench.dir/ht_cleanup_encode.cpp.o -c /Users/osamu/Documents/Clone/HTCleanupVitis/ht_cleanup_encode.cpp",
+  "file": "/Users/osamu/Documents/Clone/HTCleanupVitis/ht_cleanup_encode.cpp"
 },
 {
-  "directory": "C:/Users/admin441/Documents/HTCleanupVitis/build",
-  "command": "C:/tools/msys64/mingw64/bin/x86_64-w64-mingw32-g++.exe   -Wall -Wformat -Wextra -Wconversion -Wsign-conversion -Wunused-parameter -Wall -Wformat -Wextra -Wconversion -Wsign-conversion -Wunused-parameter -O0 -g -std=gnu++17 -o CMakeFiles/test_bench.dir/ht_cleanup_encode_tb.cpp.obj -c C:/Users/admin441/Documents/HTCleanupVitis/ht_cleanup_encode_tb.cpp",
-  "file": "C:/Users/admin441/Documents/HTCleanupVitis/ht_cleanup_encode_tb.cpp"
+  "directory": "/Users/osamu/Documents/Clone/HTCleanupVitis/build",
+  "command": "/usr/bin/clang++   -Wformat -fno-omit-frame-pointer -Wformat -fno-omit-frame-pointer -O0 -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.1.sdk -std=gnu++17 -o CMakeFiles/test_bench.dir/ht_cleanup_encode_tb.cpp.o -c /Users/osamu/Documents/Clone/HTCleanupVitis/ht_cleanup_encode_tb.cpp",
+  "file": "/Users/osamu/Documents/Clone/HTCleanupVitis/ht_cleanup_encode_tb.cpp"
 }
 ]

@@ -1,0 +1,1 @@
+/usr/bin/clang++ -Wformat -fno-omit-frame-pointer -Wformat -fno-omit-frame-pointer -O0 -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.1.sdk -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/test_bench.dir/ht_cleanup_encode.cpp.o CMakeFiles/test_bench.dir/ht_cleanup_encode_tb.cpp.o -o test_bench 
