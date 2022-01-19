@@ -269,12 +269,12 @@ static inline void make_storage(const j2k_codeblock *const block, const uint16_t
 
   // First quad
   for (int i = 0; i < 4; ++i) {
-    sigma_n[i] = block->get_state(Sigma, y[i], x[i]);  // kuramochi
+    sigma_n[i] = block->get_sigma(y[i], x[i]);  // kuramochi
   }
   rho_q[0] = sigma_n[0] + (sigma_n[1] << 1) + (sigma_n[2] << 2) + (sigma_n[3] << 3);
   // Second quad
   for (int i = 4; i < 8; ++i) {
-    sigma_n[i] = block->get_state(Sigma, y[i], x[i]);  // kuramochi
+    sigma_n[i] = block->get_sigma(y[i], x[i]);  // kuramochi
   }
   rho_q[1] = sigma_n[4] + (sigma_n[5] << 1) + (sigma_n[6] << 2) + (sigma_n[7] << 3);
 
@@ -298,7 +298,7 @@ static inline void make_storage_one(const j2k_codeblock *const block, const uint
   const int32_t y[4] = {2 * qy, 2 * qy + 1, 2 * qy, 2 * qy + 1};
 
   for (int i = 0; i < 4; ++i) {
-    sigma_n[i] = block->get_state(Sigma, y[i], x[i]);  // kuramochi
+    sigma_n[i] = block->get_sigma(y[i], x[i]);  // kuramochi
   }
   rho_q[0] = sigma_n[0] + (sigma_n[1] << 1) + (sigma_n[2] << 2) + (sigma_n[3] << 3);
 

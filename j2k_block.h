@@ -118,14 +118,17 @@ class j2k_codeblock : public j2k_region {
     this->pass_length = 0;  // std::vector<uint32_t>(num_layers, 0);        // critical section//kuramochi
   }
 
-  void modify_state(const std::function<void(uint8_t &, uint8_t)> &callback, uint8_t val,
-                    int16_t j1,  // kuramochi
-                    int16_t j2) {
-    callback(block_states[(j1 + 1) * (size.x + 2) + (j2 + 1)], val);  // kuramochi
-  }
-  uint8_t get_state(const std::function<uint8_t(uint8_t &)> &callback, int16_t j1,
-                    int16_t j2) const {                                 // kuramochi
-    return callback(block_states[(j1 + 1) * (size.x + 2) + (j2 + 1)]);  // kuramochi
+  // void modify_state(const std::function<void(uint8_t &, uint8_t)> &callback, uint8_t val,
+  //                   int16_t j1,  // kuramochi
+  //                   int16_t j2) {
+  //   callback(block_states[(j1 + 1) * (size.x + 2) + (j2 + 1)], val);  // kuramochi
+  // }
+  // uint8_t get_state(const std::function<uint8_t(uint8_t &)> &callback, int16_t j1,
+  //                   int16_t j2) const {                                 // kuramochi
+  //   return callback(block_states[(j1 + 1) * (size.x + 2) + (j2 + 1)]);  // kuramochi
+  // }
+  uint8_t get_sigma(int16_t j1, int16_t j2) const {
+    return block_states[(j1 + 1) * (size.x + 2) + (j2 + 1)] & 1;
   }
   // DEBUG FUNCTION, SOON BE DELETED
   uint8_t get_orientation() const { return band; }
