@@ -43,7 +43,7 @@ class j2k_region {
   void set_pos0(element_siz in) { pos0 = in; }
   // set bottom-right coordinate (exclusive)
   void set_pos1(element_siz in) { pos1 = in; }
-  j2k_region() = default;
+  j2k_region(){};
   j2k_region(element_siz p0, element_siz p1) : pos0(p0), pos1(p1) {}
 };
 /********************************************************************************
@@ -92,8 +92,8 @@ class j2k_codeblock : public j2k_region {
         index(idx),
         band(orientation),
         M_b(M_b),
-        compressed_data(nullptr),      // kuramochi
-        current_address(nullptr),      // kuramochi
+        compressed_data(NULL),         // kuramochi
+        current_address(NULL),         // kuramochi
         block_states(g_state_buffer),  // kuramochi
         // public
         R_b(R_b),

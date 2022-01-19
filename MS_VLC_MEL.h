@@ -72,7 +72,7 @@ class state_MEL_enc {
  private:
   int8_t MEL_k;
   uint8_t MEL_run;
-  const uint8_t MEL_E[13];
+  uint8_t MEL_E[13];
   uint8_t MEL_t;
   int32_t pos;
   uint8_t rem;
@@ -86,12 +86,26 @@ class state_MEL_enc {
   explicit state_MEL_enc(uint8_t *p)
       : MEL_k(0),
         MEL_run(0),
-        MEL_E{0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 4, 5},
+        // MEL_E{0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 4, 5},
         MEL_t(1 << MEL_E[MEL_k]),
         pos(0),
         rem(8),
         tmp(0),
-        buf(p) {}
+        buf(p) {
+    MEL_E[0]  = 0;
+    MEL_E[1]  = 0;
+    MEL_E[2]  = 0;
+    MEL_E[3]  = 1;
+    MEL_E[4]  = 1;
+    MEL_E[5]  = 1;
+    MEL_E[6]  = 2;
+    MEL_E[7]  = 2;
+    MEL_E[8]  = 2;
+    MEL_E[9]  = 3;
+    MEL_E[10] = 3;
+    MEL_E[11] = 4;
+    MEL_E[12] = 5;
+  }
   void encodeMEL(uint8_t smel);
   void termMEL();
 };

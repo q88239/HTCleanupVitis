@@ -5,7 +5,7 @@ project(open_htj2k LANGUAGES CXX DESCRIPTION "Open source implementation of 1544
 enable_language(CXX)
 
 #### Compiler settings
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 98)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 message(STATUS "${CMAKE_HOST_SYSTEM_PROCESSOR}")
@@ -48,4 +48,5 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 	set(CMAKE_CXX_FLAGS_RelWithDebInfo "${CMAKE_CXX_FLAGS} -O2 -g")
 endif()
 
-add_executable(test_bench ht_cleanup_encode.cpp ht_cleanup_encode_tb.cpp)
+#add_executable(test_bench ht_cleanup_encode.cpp ht_cleanup_encode_tb.cpp)
+add_executable(test_bench ht_cleanup_encode.cpp)
