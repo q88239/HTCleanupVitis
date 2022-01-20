@@ -1,5 +1,6 @@
-#include <stdio.h>
-#include "ht_cleanup_encode.h"
+#include <cstdio>
+#include "j2k_block.h"
+
 sprec_t data[4096] = {
     32,  29,  26,  24,  27,  39,  38,  5,   -35, -27, -23, -22, -23,  -16, -8,  -2,  1,   1,   1,   1,
     2,   3,   3,   4,   4,   4,   3,   1,   2,   1,   3,   3,   3,    1,   -1,  -1,  -1,  -3,  -8,  -19,
@@ -212,10 +213,14 @@ uint8_t g_compressed_buffer[65536]                           = {0};
 int32_t g_sample_buffer[CBLK_WIDTH * CBLK_HEIGHT]            = {0};
 uint8_t g_state_buffer[(CBLK_WIDTH + 2) * (CBLK_HEIGHT + 2)] = {0};
 
+int32_t htj2k_encode(const uint32_t &idx, uint8_t orientation, uint8_t M_b, uint8_t R_b,
+                     uint8_t transformation, float stepsize, uint32_t band_stride, sprec_t *ibuf,
+                     uint32_t offset, const uint16_t &numlayers, const uint8_t &codeblock_style,
+                     const element_siz &p0, const element_siz &p1, const element_siz &s,
+                     int32_t *g_sample_buffer, uint8_t *g_state_buffer, uint8_t *g_compressed_buffer);
 int main() {
   int retval              = 0;
   uint8_t ROIshift        = 0;
-  j2k_codeblock *blk      = nullptr;
   uint32_t idx            = 0;
   uint8_t orientation     = 0;
   uint8_t M_b             = 7;
@@ -230,11 +235,10 @@ int main() {
   element_siz p1(64, 64);
   element_siz s(64, 64);
 
-  blk = new j2k_codeblock(idx, orientation, M_b, R_b, transformation, stepsize, band_stride, &data[0],
-                          offset, numlayers, codeblock_style, p0, p1, s, g_sample_buffer, g_state_buffer,
-                          g_compressed_buffer);
-  int32_t length = htj2k_encode(blk, ROIshift);
-  delete blk;
+  int32_t length = htj2k_encode(idx, orientation, M_b, R_b, transformation, stepsize, band_stride, data,
+                                offset, numlayers, codeblock_style, p0, p1, s, g_sample_buffer,
+                                g_state_buffer, g_compressed_buffer);
+
   if (length == 3921) {
     printf("OK!\n");
   } else {

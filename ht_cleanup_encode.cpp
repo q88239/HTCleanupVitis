@@ -1,6 +1,7 @@
 //#include <algorithm>
 //#include <memory>
 //#include <string.h>
+#include <cstdio>
 #include "MS_VLC_MEL.h"
 #include "bitoperation.h"
 #include "ht_tables.h"
@@ -316,7 +317,7 @@ static inline void make_storage_one(const j2k_codeblock *const block, const uint
 }
 
 // UVLC encoding for initial line pair
-auto encode_UVLC0 = [](uint16_t &cwd, uint8_t &lw, int32_t u1, int32_t u2 = 0) {
+void encode_UVLC0(uint16_t &cwd, uint8_t &lw, int32_t u1, int32_t u2 = 0) {
   int32_t tmp;
   tmp = enc_UVLC_table0[u1 + (u2 << 5)];
   lw  = (tmp & 0xFF);
@@ -324,7 +325,7 @@ auto encode_UVLC0 = [](uint16_t &cwd, uint8_t &lw, int32_t u1, int32_t u2 = 0) {
 };
 
 // UVLC encoding for non-initial line pair
-auto encode_UVLC1 = [](uint16_t &cwd, uint8_t &lw, int32_t u1, int32_t u2 = 0) {
+void encode_UVLC1(uint16_t &cwd, uint8_t &lw, int32_t u1, int32_t u2 = 0) {
   int32_t tmp;
   tmp = enc_UVLC_table1[u1 + (u2 << 5)];
   lw  = (tmp & 0xFF);
@@ -360,16 +361,14 @@ int32_t termMELandVLC(state_VLC_enc &VLC, state_MEL_enc &MEL) {
                           2 * (qx + 1), 2 * (qx + 1), 2 * (qx + 1) + 1, 2 * (qx + 1) + 1};                 \
     const int32_t y[8] = {2 * qy, 2 * qy + 1, 2 * qy, 2 * qy + 1, 2 * qy, 2 * qy + 1, 2 * qy, 2 * qy + 1}; \
     for (int i = 0; i < 4; ++i)                                                                            \
-      sigma_n[i] =                                                                                         \
-          (block->block_states[(y[i] + 1) * (block->size.x + 2) + (x[i] + 1)] >> SHIFT_SIGMA) & 1;         \
+      sigma_n[i] = (block.block_states[(y[i] + 1) * (block.size.x + 2) + (x[i] + 1)] >> SHIFT_SIGMA) & 1;  \
     rho_q[0] = sigma_n[0] + (sigma_n[1] << 1) + (sigma_n[2] << 2) + (sigma_n[3] << 3);                     \
     for (int i = 4; i < 8; ++i)                                                                            \
-      sigma_n[i] =                                                                                         \
-          (block->block_states[(y[i] + 1) * (block->size.x + 2) + (x[i] + 1)] >> SHIFT_SIGMA) & 1;         \
+      sigma_n[i] = (block.block_states[(y[i] + 1) * (block.size.x + 2) + (x[i] + 1)] >> SHIFT_SIGMA) & 1;  \
     rho_q[1] = sigma_n[4] + (sigma_n[5] << 1) + (sigma_n[6] << 2) + (sigma_n[7] << 3);                     \
     for (int i = 0; i < 8; ++i) {                                                                          \
-      if ((x[i] >= 0 && x[i] < (block->size.x)) && (y[i] >= 0 && y[i] < (block->size.y)))                  \
-        v_n[i] = block->sample_buf[x[i] + y[i] * block->size.x];                                           \
+      if ((x[i] >= 0 && x[i] < (block.size.x)) && (y[i] >= 0 && y[i] < (block.size.y)))                    \
+        v_n[i] = block.sample_buf[x[i] + y[i] * block.size.x];                                             \
       else                                                                                                 \
         v_n[i] = 0;                                                                                        \
     }                                                                                                      \
@@ -381,7 +380,15 @@ int32_t termMELandVLC(state_VLC_enc &VLC, state_MEL_enc &MEL) {
 #define Q1 1
 
 /******************************************************************************/
-int32_t htj2k_encode(j2k_codeblock *const block, const uint8_t ROIshift) noexcept {
+int32_t htj2k_encode(const uint32_t &idx, uint8_t orientation, uint8_t M_b, uint8_t R_b,
+                     uint8_t transformation, float stepsize, uint32_t band_stride, sprec_t *ibuf,
+                     uint32_t offset, const uint16_t &numlayers, const uint8_t &codeblock_style,
+                     const element_siz &p0, const element_siz &p1, const element_siz &s,
+                     int32_t *g_sample_buffer, uint8_t *g_state_buffer, uint8_t *g_compressed_buffer) {
+  j2k_codeblock block(idx, orientation, M_b, R_b, transformation, stepsize, band_stride, ibuf, offset,
+                      numlayers, codeblock_style, p0, p1, s, g_sample_buffer, g_state_buffer,
+                      g_compressed_buffer);
+
   // length of HT cleanup pass
   int32_t Lcup;
   // length of MagSgn buffer
@@ -391,23 +398,23 @@ int32_t htj2k_encode(j2k_codeblock *const block, const uint8_t ROIshift) noexcep
   // used as a flag to invoke HT Cleanup encoding
   uint32_t or_val = 0;
 
-  const uint16_t QW = ceil_int(block->size.x, 2);
-  const uint16_t QH = ceil_int(block->size.y, 2);
+  const uint16_t QW = ceil_int(block.size.x, 2);
+  const uint16_t QH = ceil_int(block.size.y, 2);
 
-  block->set_MagSgn_and_sigma(or_val);
+  block.set_MagSgn_and_sigma(or_val);
 
   if (!or_val) {
     // nothing to do here because this codeblock is empty
     // set length of coding passes
-    block->length      = 0;
-    block->pass_length = 0;
+    block.length      = 0;
+    block.pass_length = 0;
     // set number of coding passes
-    block->num_passes = 0;
-    // block->layer_passes = 0; // kuramochi
-    // block->layer_start  = 0; // kuramochi
+    block.num_passes = 0;
+    // block.layer_passes = 0; // kuramochi
+    // block.layer_start  = 0; // kuramochi
     // set number of zero-bitplanes (=Zblk)
-    block->num_ZBP = block->get_Mb() - 1;
-    return block->length;
+    block.num_ZBP = block.get_Mb() - 1;
+    return block.length;
   }
 
   // buffers shall be zeroed.
@@ -421,10 +428,10 @@ int32_t htj2k_encode(j2k_codeblock *const block, const uint8_t ROIshift) noexcep
   state_VLC_enc VLC_encoder(rev_buf);
 
   uint32_t v_n[8];
-  // std::unique_ptr<int32_t[]> Eadj = std::make_unique<int32_t[]>(round_up(block->size.x, 2) + 2);
-  // memset(Eadj.get(), 0, round_up(block->size.x, 2) + 2);  // kuramochi
-  // std::unique_ptr<uint8_t[]> sigma_adj = std::make_unique<uint8_t[]>(round_up(block->size.x, 2) + 2);
-  // memset(sigma_adj.get(), 0, round_up(block->size.x, 2) + 2);  // kuramochi
+  // std::unique_ptr<int32_t[]> Eadj = std::make_unique<int32_t[]>(round_up(block.size.x, 2) + 2);
+  // memset(Eadj.get(), 0, round_up(block.size.x, 2) + 2);  // kuramochi
+  // std::unique_ptr<uint8_t[]> sigma_adj = std::make_unique<uint8_t[]>(round_up(block.size.x, 2) + 2);
+  // memset(sigma_adj.get(), 0, round_up(block.size.x, 2) + 2);  // kuramochi
 
   int32_t Eadj[CBLK_WIDTH + 2]      = {0};
   uint8_t sigma_adj[CBLK_WIDTH + 2] = {0};
@@ -438,7 +445,7 @@ int32_t htj2k_encode(j2k_codeblock *const block, const uint8_t ROIshift) noexcep
   ep++;
   uint8_t *sp = sigma_adj;
   sp++;
-  int32_t *p_sample = block->sample_buf;         //.get();
+  int32_t *p_sample = block.sample_buf;          //.get();
   for (uint16_t qx = 0; qx < QW - 1; qx += 2) {  // kuramochi
     const int16_t qy = 0;
     MAKE_STORAGE()
@@ -563,7 +570,7 @@ int32_t htj2k_encode(j2k_codeblock *const block, const uint8_t ROIshift) noexcep
   }
   if (QW & 1) {
     uint16_t qx = QW - 1;
-    make_storage_one(block, 0, qx, QH, QW, sigma_n, v_n, E_n, rho_q);
+    make_storage_one(&block, 0, qx, QH, QW, sigma_n, v_n, E_n, rho_q);
     // MEL encoding for the first quad
     if (c_q[Q0] == 0) {
       MEL_encoder.encodeMEL((rho_q[Q0] != 0));
@@ -772,7 +779,7 @@ int32_t htj2k_encode(j2k_codeblock *const block, const uint8_t ROIshift) noexcep
       c_q[Q0] = (sp[2 * qx + 1] | sp[2 * qx + 2]) << 2;
       c_q[Q0] += (sigma_n[6] | sigma_n[7]) << 1;
       c_q[Q0] += sp[2 * qx - 1] | sp[2 * qx];
-      make_storage_one(block, qy, qx, QH, QW, sigma_n, v_n, E_n, rho_q);
+      make_storage_one(&block, qy, qx, QH, QW, sigma_n, v_n, E_n, rho_q);
       // MEL encoding of the first quad
       if (c_q[Q0] == 0) {
         MEL_encoder.encodeMEL((rho_q[Q0] != 0));
@@ -851,16 +858,16 @@ int32_t htj2k_encode(j2k_codeblock *const block, const uint8_t ROIshift) noexcep
 
   // printf("Lcup %d\n", Lcup);
 
-  // transfer Dcup[] to block->compressed_data
-  // block->set_compressed_data(fwd_buf.get(), Lcup);
+  // transfer Dcup[] to block.compressed_data
+  // block.set_compressed_data(fwd_buf.get(), Lcup);
   // set length of compressed data
-  block->length      = Lcup;
-  block->pass_length = Lcup;
+  block.length      = Lcup;
+  block.pass_length = Lcup;
   // set number of coding passes
-  block->num_passes = 1;
-  // block->layer_passes[0] = 1;
-  // block->layer_start[0]  = 0; // kuramochi
+  block.num_passes = 1;
+  // block.layer_passes[0] = 1;
+  // block.layer_start[0]  = 0; // kuramochi
   // set number of zero-bit planes (=Zblk) // kuramochi
-  block->num_ZBP = block->get_Mb() - 1;
-  return block->length;
+  block.num_ZBP = block.get_Mb() - 1;
+  return block.length;
 }
