@@ -214,21 +214,39 @@ void state_MEL_enc::termMEL() {
  * state_VLC_enc: member functions
  *******************************************************************************/
 void state_VLC_enc::emitVLCBits(uint16_t cwd, uint8_t len) {
-  int32_t len32 = len;
-  for (; len32 > 0;) {
-    int32_t available_bits = 8 - (last > 0x8F) - bits;
-    int32_t t =
-        (available_bits < len32) ? available_bits : len32;  // std::min(available_bits, (int32_t)len);
-    tmp |= (cwd & (1 << t) - 1) << bits;
-    bits += t;
-    available_bits -= t;
-    len32 -= t;
-    cwd >>= t;
-    if (available_bits == 0) {
-      if ((last > 0x8f) && tmp != 0x7F) {
-        last = 0x00;
-        continue;
-      }
+  // int32_t len32 = len;
+  // for (; len32 > 0;) {
+  //   int32_t available_bits = 8 - (last > 0x8F) - bits;
+  //   int32_t t =
+  //       (available_bits < len32) ? available_bits : len32;  // std::min(available_bits, (int32_t)len);
+  //   tmp |= (cwd & (1 << t) - 1) << bits;
+  //   bits += t;
+  //   available_bits -= t;
+  //   len32 -= t;
+  //   cwd >>= t;
+  //   if (available_bits == 0) {
+  //     if ((last > 0x8f) && tmp != 0x7F) {
+  //       last = 0x00;
+  //       continue;
+  //     }
+  //     buf[pos] = tmp;
+  //     pos--;  // reverse order
+  //     last = tmp;
+  //     tmp  = 0;
+  //     bits = 0;
+  //   }
+  // }
+  uint8_t b;
+  for (; len > 0;) {
+    b = cwd & 1;
+    cwd >>= 1;
+    len--;
+    tmp |= b << bits;
+    bits++;
+    if ((last > 0x8F) && (tmp == 0x7F)) {
+      bits++;
+    }
+    if (bits == 8) {
       buf[pos] = tmp;
       pos--;  // reverse order
       last = tmp;
@@ -236,24 +254,6 @@ void state_VLC_enc::emitVLCBits(uint16_t cwd, uint8_t len) {
       bits = 0;
     }
   }
-  //  uint8_t b;
-  //  for (; len > 0;) {
-  //    b = cwd & 1;
-  //    cwd >>= 1;
-  //    len--;
-  //    tmp |= b << bits;
-  //    bits++;
-  //    if ((last > 0x8F) && (tmp == 0x7F)) {
-  //      bits++;
-  //    }
-  //    if (bits == 8) {
-  //      buf[pos] = tmp;
-  //      pos--;  // reverse order
-  //      last = tmp;
-  //      tmp  = 0;
-  //      bits = 0;
-  //    }
-  //  }
 }
 
 /********************************************************************************
@@ -350,7 +350,7 @@ int32_t termMELandVLC(state_VLC_enc &VLC, state_MEL_enc &MEL) {
     MEL.pos++;
   }
   // concatenate MEL and VLC buffers
-  memmove(&MEL.buf[MEL.pos], &VLC.buf[VLC.pos + 1], MAX_Scup - VLC.pos - 1);
+  // memmove(&MEL.buf[MEL.pos], &VLC.buf[VLC.pos + 1], MAX_Scup - VLC.pos - 1);
   // return Scup
   return (MEL.pos + MAX_Scup - VLC.pos - 1);
 }
